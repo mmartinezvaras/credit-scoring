@@ -1,12 +1,7 @@
-# Dos temas: el botón Claro / Oscuro de la app elige entre ellos.
-[theme.light]
+# Un solo tema de Streamlit (claro). El modo oscuro lo pone el botón de la app con CSS, al instante.
+[theme]
+base = "light"
 primaryColor = "#000000"
 backgroundColor = "#F5F5F7"
 secondaryBackgroundColor = "#FFFFFF"
 textColor = "#000000"
-
-[theme.dark]
-primaryColor = "#FFFFFF"
-backgroundColor = "#000000"
-secondaryBackgroundColor = "#141414"
-textColor = "#F5F5F7"

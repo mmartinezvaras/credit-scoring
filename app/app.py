@@ -13,7 +13,9 @@ REPO = "https://github.com/mmartinezvaras/credit-scoring"
 st.set_page_config(page_title="Scoring de crédito explicable", page_icon="💳", layout="centered")
 
 
-# ---------- Modo claro y oscuro: los colores siguen al tema activo de Streamlit ----------
+# ---------- Modo claro y oscuro ----------
+# El cambio se hace en el navegador, sin recargar ni volver a ejecutar Python: el botón pone
+# data-tema="oscuro" en la página y el CSS cambia los colores al instante.
 CLARO = """--ink:#000000; --ink-2:#555555; --silver:#86868B; --paper:#F5F5F7; --sheet:#FFFFFF; --accent:#000000;
   --rule:rgba(134,134,139,.35); --ring:rgba(0,0,0,.08); --on-strong:#FFFFFF;
   --lift:0 1px 2px rgba(0,0,0,.04), 0 4px 16px -6px rgba(0,0,0,.10);
@@ -22,11 +24,7 @@ OSCURO = """--ink:#F5F5F7; --ink-2:#86868B; --silver:#86868B; --paper:#000000; -
   --rule:rgba(134,134,139,.30); --ring:rgba(255,255,255,.10); --on-strong:#000000;
   --lift:0 1px 2px rgba(0,0,0,.5), 0 6px 20px -8px rgba(0,0,0,.8);
   --t0:rgba(255,255,255,.08); --t1:rgba(255,255,255,.16); --t2:rgba(255,255,255,.32); --t3:#86868B; --t4:#FFFFFF; color-scheme:dark;"""
-tema = getattr(getattr(st.context, "theme", None), "type", None)
-if tema in ("light", "dark"):
-    VARIABLES = f":root {{ {OSCURO if tema == 'dark' else CLARO} }}"
-else:  # versión antigua de Streamlit: seguimos al sistema
-    VARIABLES = f":root {{ {CLARO} }} @media (prefers-color-scheme: dark) {{ :root {{ {OSCURO} }} }}"
+VARIABLES = f":root {{ {CLARO} }}\nhtml[data-tema='oscuro'] {{ {OSCURO} }}"
 
 # ---------- Estilo (paleta de Marcos: negro, grafito, plata, índigo suave, blanco) ----------
 st.markdown(
@@ -46,6 +44,21 @@ html, body, [class*="st-"], .stMarkdown, button, input, textarea {
 #MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
 [data-testid="stHeader"] { display: none !important; }
 [data-testid="stMainBlockContainer"], .block-container { padding-top: 1.5rem; padding-bottom: 4rem; max-width: 760px; }
+
+/* Fondo y textos de Streamlit con nuestras variables */
+[data-testid="stApp"] { background: var(--paper); color: var(--ink); }
+[data-testid="stMarkdownContainer"], [data-testid="stWidgetLabel"] p, [data-testid="stExpander"] summary { color: var(--ink); }
+[data-testid="stCaptionContainer"] { color: var(--ink-2); }
+[data-testid="stExpander"] details { background: var(--sheet); border-color: var(--rule); }
+/* Los controles de Streamlit (y la tabla, que es un dibujo) se ven en oscuro invirtiéndolos:
+   con una paleta en blanco y negro, invertir da justo los colores oscuros */
+html[data-tema='oscuro'] :is([data-testid="stNumberInput"], [data-testid="stSelectbox"], [data-testid="stDataFrame"],
+  [data-testid="stButtonGroup"], [data-baseweb="popover"], [data-testid="stTooltipContent"]) {
+  filter: invert(1) hue-rotate(180deg);
+}
+/* dentro de lo invertido, el texto va en su color de modo claro (al invertirse queda claro) */
+html[data-tema='oscuro'] :is([data-testid="stNumberInput"], [data-testid="stSelectbox"], [data-testid="stButtonGroup"])
+  :is([data-testid="stMarkdownContainer"], [data-testid="stWidgetLabel"] p) { color: #000000; }
 
 /* Cabecera */
 .eyebrow { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; }
@@ -76,7 +89,7 @@ html, body, [class*="st-"], .stMarkdown, button, input, textarea {
 .hint { color: var(--ink-2); font-size: .93rem; margin: .2rem 0 .8rem; }
 
 /* Tarjetas */
-[data-testid="stVerticalBlockBorderWrapper"] { background: var(--sheet); border-radius: 16px !important;
+[data-testid="stVerticalBlockBorderWrapper"], .st-key-cliente { background: var(--sheet); border-radius: 16px !important;
   border: none !important; box-shadow: 0 0 0 1px var(--ring), var(--lift); }
 .card { background: var(--sheet); border-radius: 16px; padding: 1.4rem 1.5rem; box-shadow: 0 0 0 1px var(--ring), var(--lift); }
 
@@ -238,26 +251,45 @@ def describir(col, f):
     return col, ""
 
 
-# ---------- Botón Claro / Oscuro ----------
-# Streamlit guarda el tema elegido en el navegador (localStorage). El botón cambia ese valor y recarga la página,
-# así cambian también la tabla y los demás controles de Streamlit, no solo nuestros colores.
-actual = "Oscuro" if tema == "dark" else "Claro"
+# ---------- Botón Claro / Oscuro (funciona en el navegador, al instante) ----------
 _, col_tema = st.columns([5, 2])
-elegido = col_tema.segmented_control(
-    "Tema", ["Claro", "Oscuro"], default=actual, key="tema", label_visibility="collapsed",
-    format_func=lambda t: (":material/light_mode: " if t == "Claro" else ":material/dark_mode: ") + t,
-)
-if elegido and elegido != actual:
-    nombre_tema = "Dark" if elegido == "Oscuro" else "Light"
+with col_tema:
     components.html(
-        f"""<script>
-        const ls = window.parent.localStorage;
-        const claves = Object.keys(ls).filter(k => k.startsWith("stActiveTheme-"));
-        if (!claves.length) claves.push("stActiveTheme-/-v2");
-        claves.forEach(k => ls.setItem(k, JSON.stringify("{nombre_tema}")));
-        window.parent.location.reload();
-        </script>""",
-        height=0,
+        """
+<style>
+  body { margin: 0; display: flex; justify-content: flex-end; font: 500 13px -apple-system, BlinkMacSystemFont, "Inter", sans-serif; }
+  .sw { display: inline-flex; padding: 3px; border-radius: 999px; gap: 2px; }
+  button { border: 0; background: transparent; padding: 6px 12px; border-radius: 999px; cursor: pointer; font: inherit;
+           display: inline-flex; align-items: center; gap: 6px; transition: transform 160ms cubic-bezier(.23,1,.32,1); }
+  button:active { transform: scale(.97); }
+  svg { width: 14px; height: 14px; }
+  .claro .sw { background: #FFFFFF; box-shadow: 0 0 0 1px rgba(0,0,0,.08); }
+  .claro button { color: #555555; } .claro button[aria-pressed="true"] { background: #000000; color: #FFFFFF; }
+  .oscuro .sw { background: #141414; box-shadow: 0 0 0 1px rgba(255,255,255,.10); }
+  .oscuro button { color: #86868B; } .oscuro button[aria-pressed="true"] { background: #FFFFFF; color: #000000; }
+</style>
+<div class="sw" role="group" aria-label="Tema">
+  <button data-t="claro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Claro</button>
+  <button data-t="oscuro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>Oscuro</button>
+</div>
+<script>
+  const raiz = window.parent.document.documentElement;
+  let guardado = null;
+  try { guardado = window.parent.localStorage.getItem("tema-scoring"); } catch (e) {}
+  const sistema = window.parent.matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro";
+  function poner(t) {
+    raiz.dataset.tema = t;
+    document.body.className = t;
+    document.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.t === t));
+  }
+  poner(guardado || sistema);
+  document.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    poner(b.dataset.t);
+    try { window.parent.localStorage.setItem("tema-scoring", b.dataset.t); } catch (e) {}
+  }));
+</script>
+""",
+        height=40,
     )
 
 # ---------- 3. Cabecera para quien llega por primera vez ----------
@@ -285,7 +317,7 @@ seccion(1, "El cliente", "Empieza con un ejemplo. Puedes cambiar cualquier dato 
 nombre = st.segmented_control("Ejemplo", list(EJEMPLOS), default="Cliente cumplidor", label_visibility="collapsed") or "Cliente cumplidor"
 ej = EJEMPLOS[nombre]
 
-with st.container(border=True):
+with st.container(border=True, key="cliente"):
     c1, c2 = st.columns(2)
     limite = c1.number_input("Límite de crédito (NT$)", 10_000, 1_000_000, ej["limite"], step=10_000, key=f"limite_{nombre}")
     edad = c2.number_input("Edad", 21, 79, ej["edad"], key=f"edad_{nombre}")
