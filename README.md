@@ -2,7 +2,9 @@
 
 Modelo de **probabilidad de impago (PD)** para clientes de tarjeta de crédito, construido paso a paso como en un equipo de Riesgo de Crédito: desde ficheros sucios de dos sistemas del banco hasta un modelo que se pueda explicar a cada cliente.
 
-> 🚧 En construcción. Hechos: limpieza, exploración, variables, dos modelos y explicaciones con SHAP. Siguientes: calibración, punto de corte, trato igual entre grupos y una demo.
+Incluye una **app en Streamlit** (`app/app.py`): cambias los datos de un cliente y ves su probabilidad de impago, su tramo de riesgo, la decisión y los motivos.
+
+![App de scoring: cliente en apuros con PD del 63,8 %, tramo E y sus motivos](docs/app.jpg)
 
 ## Los datos
 
@@ -23,7 +25,8 @@ Gini medido con un 30 % de clientes que los modelos no vieron al entrenar (Gini 
 | --- | --- | --- | --- |
 | Regresión logística (tabla de pesos) | 0,511 | 0,478 | 0,033 |
 | LightGBM sin regularizar | 0,632 | 0,548 | 0,084 |
-| **LightGBM regularizado** | 0,614 | **0,547** | 0,067 |
+| LightGBM regularizado | 0,614 | 0,547 | 0,067 |
+| **LightGBM regularizado y monótono** (modelo final) | | **0,546** | |
 
 LightGBM ordena a los clientes 7 puntos de Gini mejor que la regresión logística. Al regularizarlo (árboles más pequeños y hojas con más clientes) se redujo el sobreajuste sin perder poder en prueba.
 
@@ -35,7 +38,21 @@ Cada decisión se puede explicar con SHAP. Por ejemplo, para tres clientes de pr
 | 1 | 62 % | retraso en el pago de septiembre, retrasos importantes en los últimos meses, pagos bajos |
 | 2 | 13 % | límite de crédito bajo, pagos bajos respecto a lo facturado, deuda en aumento |
 
-El sexo no se usa como variable del modelo; se guarda solo para comprobar que el modelo trata igual a hombres y mujeres.
+El modelo final obliga a que la relación tenga sentido de negocio en las variables clave (más retraso → más riesgo; más límite o más parte pagada → menos riesgo). Las restricciones sobre el uso del límite costaban 5 puntos de Gini y se quitaron; con el resto, el Gini se mantiene.
+
+Medido como lo haría un banco, sobre los 8.973 clientes de prueba:
+
+| Tramo | % de clientes | PD media | Impago real |
+| --- | --- | --- | --- |
+| A | 33 % | 7,0 % | 7,6 % |
+| B | 34 % | 14,5 % | 15,3 % |
+| C | 15 % | 26,4 % | 28,0 % |
+| D | 7 % | 43,6 % | 44,4 % |
+| E | 11 % | 69,5 % | 65,5 % |
+
+- **Calibración:** por deciles, la PD media y el impago real difieren como mucho 4 puntos.
+- **Punto de corte:** suponiendo que un impago cuesta 5 veces más que un buen cliente perdido, el corte de menor coste es PD ≥ 15 %: se revisa al 47 % de los clientes y se evita el 77 % de los impagos.
+- **Trato igual:** el sexo no es variable del modelo. Con él aparte, el Gini es 0,532 en hombres y 0,554 en mujeres, y la PD media coincide con el impago real de cada grupo (23,3 % frente a 23,8 %; 20,8 % frente a 21,1 %).
 
 ## Lo que se ha hecho
 
@@ -57,6 +74,10 @@ El sexo no se usa como variable del modelo; se guarda solo para comprobar que el
 
 **`notebooks/07_explicar_shap.ipynb`** explica LightGBM con SHAP: qué variables pesan y en qué sentido, interacciones (uso del límite × retraso), la cascada de un cliente y sus motivos principales en lenguaje claro.
 
+**`notebooks/08b_monotonia.ipynb`** añade restricciones de monotonía a LightGBM y comprueba que ninguna variable va en sentido contrario.
+
+**`notebooks/08_medir_como_banco.ipynb`** mide calibración, tramos de rating A–E, el punto de corte por coste y el trato igual entre hombres y mujeres, y guarda el modelo y su configuración en `models/`.
+
 ## Cómo ejecutarlo
 
 ```bash
@@ -65,4 +86,11 @@ pip install -r requirements.txt
 jupyter lab
 ```
 
-Ejecuta los cuadernos en orden, del `02` al `07`: cada uno lee lo que guardó el anterior en `data/clean/`. En un Mac, LightGBM necesita además `conda install -c conda-forge llvm-openmp`.
+Ejecuta los cuadernos en orden (`02` … `07`, `08b`, `08`): cada uno lee lo que guardó el anterior en `data/clean/`. En un Mac, LightGBM necesita además `conda install -c conda-forge llvm-openmp`.
+
+Para abrir la app (el modelo ya está guardado en `models/`):
+
+```bash
+pip install -r app/requirements.txt
+streamlit run app/app.py
+```

@@ -1,0 +1,31 @@
+{
+  "columnas": [
+    "retraso_sep",
+    "meses_con_retraso",
+    "peor_retraso_6m",
+    "limite_desconocido",
+    "limite_credito",
+    "uso_limite_sep",
+    "uso_medio_6m",
+    "parte_pagada_6m",
+    "cambio_uso",
+    "edad_desconocida",
+    "edad",
+    "nivel_estudios_desconocido",
+    "nivel_estudios_otros",
+    "nivel_estudios_postgrado",
+    "nivel_estudios_universidad",
+    "estado_civil_desconocido",
+    "estado_civil_otros",
+    "estado_civil_soltero"
+  ],
+  "corte": 0.15,
+  "tramos": [
+    0,
+    0.1,
+    0.2,
+    0.35,
+    0.55,
+    1
+  ]
+}
