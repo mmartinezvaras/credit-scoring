@@ -12,23 +12,37 @@ REPO = "https://github.com/mmartinezvaras/credit-scoring"
 st.set_page_config(page_title="Scoring de crédito explicable", page_icon="💳", layout="centered")
 
 
+# ---------- Modo claro y oscuro: sigue el tema de Streamlit (que por defecto sigue al sistema) ----------
+CLARO = """--ink:#000000; --ink-2:#555555; --silver:#86868B; --paper:#F5F5F7; --sheet:#FFFFFF; --accent:#000000;
+  --rule:rgba(134,134,139,.35); --ring:rgba(0,0,0,.08); --on-strong:#FFFFFF;
+  --lift:0 1px 2px rgba(0,0,0,.04), 0 4px 16px -6px rgba(0,0,0,.10);
+  --t0:rgba(0,0,0,.06); --t1:rgba(0,0,0,.14); --t2:rgba(0,0,0,.32); --t3:#555555; --t4:#000000; color-scheme:light;"""
+OSCURO = """--ink:#F5F5F7; --ink-2:#86868B; --silver:#86868B; --paper:#000000; --sheet:#141414; --accent:#FFFFFF;
+  --rule:rgba(134,134,139,.30); --ring:rgba(255,255,255,.10); --on-strong:#000000;
+  --lift:0 1px 2px rgba(0,0,0,.5), 0 6px 20px -8px rgba(0,0,0,.8);
+  --t0:rgba(255,255,255,.08); --t1:rgba(255,255,255,.16); --t2:rgba(255,255,255,.32); --t3:#86868B; --t4:#FFFFFF; color-scheme:dark;"""
+tema = getattr(getattr(st.context, "theme", None), "type", None)
+if tema in ("light", "dark"):
+    VARIABLES = f":root {{ {OSCURO if tema == 'dark' else CLARO} }}"
+else:  # versión antigua de Streamlit: seguimos al sistema
+    VARIABLES = f":root {{ {CLARO} }} @media (prefers-color-scheme: dark) {{ :root {{ {OSCURO} }} }}"
+
 # ---------- Estilo (paleta de Marcos: negro, grafito, plata, índigo suave, blanco) ----------
 st.markdown(
     """
 <style>
-:root {
-  --ink: #000000; --ink-2: #555555; --silver: #86868B; --paper: #F5F5F7; --sheet: #FFFFFF;
-  --rule: rgba(134,134,139,.35); --ring: rgba(0,0,0,.08);
-  --lift: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px -6px rgba(0,0,0,.10);
-  --ease-out: cubic-bezier(.23,1,.32,1);
-}
+__VARS__
+:root { --ease-out: cubic-bezier(.23,1,.32,1); }
+.t0 { background: var(--t0); color: var(--ink); } .t1 { background: var(--t1); color: var(--ink); }
+.t2 { background: var(--t2); color: var(--ink); } .t3 { background: var(--t3); color: var(--on-strong); }
+.t4 { background: var(--t4); color: var(--on-strong); }
 html, body, [class*="st-"], .stMarkdown, button, input, textarea {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif;
 }
 [data-testid="stIconMaterial"], [data-testid="stExpanderIcon"], .material-symbols-rounded {
   font-family: "Material Symbols Rounded" !important;
 }
-#MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
+footer, [data-testid="stAppDeployButton"], [data-testid="stDecoration"] { display: none !important; }
 [data-testid="stHeader"] { background: transparent; }
 [data-testid="stMainBlockContainer"], .block-container { padding-top: 3rem; padding-bottom: 4rem; max-width: 760px; }
 
@@ -42,7 +56,7 @@ html, body, [class*="st-"], .stMarkdown, button, input, textarea {
 .stat span { font-size: .85rem; color: var(--ink-2); }
 .steps { display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: .92rem; color: var(--ink-2); margin-bottom: .4rem; }
 .steps b { display: inline-grid; place-items: center; width: 1.45rem; height: 1.45rem; border-radius: 50%;
-           background: var(--ink); color: var(--sheet); font-size: .75rem; margin-right: .4rem; }
+           background: var(--ink); color: var(--paper); font-size: .75rem; margin-right: .4rem; }
 
 /* Entrada suave de la cabecera (solo al abrir la página) */
 @media (prefers-reduced-motion: no-preference) {
@@ -73,7 +87,7 @@ html, body, [class*="st-"], .stMarkdown, button, input, textarea {
 .res-tag { text-align: right; }
 .pill { display: inline-block; padding: .35rem .8rem; border-radius: 999px; font-weight: 600; font-size: .95rem; }
 .pill.ok { background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
-.pill.no { background: var(--ink); color: var(--sheet); }
+.pill.no { background: var(--ink); color: var(--paper); }
 .res-text { font-size: 1.02rem; line-height: 1.5; color: var(--ink); margin: 1rem 0 1.2rem; }
 .res-text span { color: var(--ink-2); }
 
@@ -116,7 +130,7 @@ button:active, [role="radio"]:active { transform: scale(.97); }
   .why-row { grid-template-columns: 1fr; gap: .4rem; }
 }
 </style>
-""",
+""".replace("__VARS__", VARIABLES),
     unsafe_allow_html=True,
 )
 
@@ -133,10 +147,6 @@ modelo, config, explicador = cargar()
 CORTE = config["corte"]
 TRAMOS = config["tramos"]
 LETRAS = ["A", "B", "C", "D", "E"]
-TONOS = [  # del más claro (A) al más oscuro (E), solo negro con transparencia
-    ("rgba(0,0,0,.06)", "#000000"), ("rgba(0,0,0,.14)", "#000000"), ("rgba(0,0,0,.32)", "#000000"),
-    ("#555555", "#FFFFFF"), ("#000000", "#FFFFFF"),
-]
 
 MESES = ["Septiembre", "Agosto", "Julio", "Junio", "Mayo", "Abril"]
 ESTUDIOS = ["postgrado", "universidad", "bachillerato", "otros", "desconocido"]
@@ -286,8 +296,7 @@ deniega = pd_cliente >= CORTE
 
 seccion(2, "El resultado")
 segmentos = "".join(
-    f'<div class="seg" style="flex:{(TRAMOS[i + 1] - TRAMOS[i]) * 100:.0f};'
-    f'background:{TONOS[i][0]};color:{TONOS[i][1]}">{LETRAS[i]}</div>'
+    f'<div class="seg t{i}" style="flex:{(TRAMOS[i + 1] - TRAMOS[i]) * 100:.0f}">{LETRAS[i]}</div>'
     for i in range(5)
 )
 if deniega:
@@ -302,7 +311,7 @@ st.markdown(
   <div class="res-top">
     <div class="res-pd"><small>Probabilidad de impago</small><b>{pct(pd_cliente, 1)}</b></div>
     <div class="res-tags">
-      <div class="res-tag"><small>Tramo</small><span class="pill" style="background:{TONOS[i_tramo][0]};color:{TONOS[i_tramo][1]}">{tramo}</span></div>
+      <div class="res-tag"><small>Tramo</small><span class="pill t{i_tramo}">{tramo}</span></div>
       <div class="res-tag"><small>Decisión</small><span class="pill {clase}">{decision}</span></div>
     </div>
   </div>
@@ -338,7 +347,7 @@ for (lbl, val), v in motivos:
     ancho = abs(v) / escala * 50
     sube = v > 0
     pos = f"left:50%;width:{ancho:.1f}%" if sube else f"left:{50 - ancho:.1f}%;width:{ancho:.1f}%"
-    color = "#000000" if sube else "#86868B"
+    color = "var(--accent)" if sube else "var(--silver)"
     flecha = "↑ sube el riesgo" if sube else "↓ baja el riesgo"
     html.append(
         f'<div class="why-row"><div class="lbl">{lbl}<span class="val">{val} · {flecha}</span></div>'
@@ -346,8 +355,8 @@ for (lbl, val), v in motivos:
     )
 st.markdown(
     '<div class="card">' + "".join(html)
-    + '<div class="legend"><span><i style="background:#86868B"></i>Baja el riesgo</span>'
-      '<span><i style="background:#000000"></i>Sube el riesgo</span></div></div>',
+    + '<div class="legend"><span><i style="background:var(--silver)"></i>Baja el riesgo</span>'
+      '<span><i style="background:var(--accent)"></i>Sube el riesgo</span></div></div>',
     unsafe_allow_html=True,
 )
 

@@ -1,6 +1,15 @@
-[theme]
+# Dos temas: la app sigue el modo claro u oscuro del sistema
+# (y se puede cambiar en el menú ⋮ → Settings).
+[theme.light]
 base = "light"
 primaryColor = "#000000"
 backgroundColor = "#F5F5F7"
 secondaryBackgroundColor = "#FFFFFF"
 textColor = "#000000"
+
+[theme.dark]
+base = "dark"
+primaryColor = "#FFFFFF"
+backgroundColor = "#000000"
+secondaryBackgroundColor = "#141414"
+textColor = "#F5F5F7"

@@ -8,6 +8,10 @@ Incluye una **app en Streamlit** (`app/app.py`): cambias los datos de un cliente
 
 ![Resultado para un cliente en apuros: probabilidad de impago del 63,8 %, tramo E, decisión Revisar y sus motivos](docs/app.jpg)
 
+Tiene modo claro y oscuro: sigue el del sistema y se puede cambiar en el menú ⋮ → Settings.
+
+![La misma app en modo oscuro](docs/app_oscuro.jpg)
+
 ## Los datos
 
 Parten del dataset público [Default of Credit Card Clients](https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients) de la UCI: 30.000 clientes de un banco de Taiwán (2005), con su límite, sus pagos de 6 meses y si pagaron al mes siguiente.
