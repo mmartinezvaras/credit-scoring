@@ -8,7 +8,7 @@ Incluye una **app en Streamlit** (`app/app.py`): cambias los datos de un cliente
 
 ![Resultado para un cliente en apuros: probabilidad de impago del 63,8 %, tramo E, decisión Revisar y sus motivos](docs/app.jpg)
 
-Tiene modo claro y oscuro: sigue el del sistema y se puede cambiar en el menú ⋮ → Settings.
+Tiene modo claro y oscuro, con un botón arriba a la derecha para elegir.
 
 ![La misma app en modo oscuro](docs/app_oscuro.jpg)
 

@@ -6,13 +6,14 @@ import numpy as np
 import pandas as pd
 import shap
 import streamlit as st
+import streamlit.components.v1 as components
 
 RAIZ = Path(__file__).resolve().parent.parent
 REPO = "https://github.com/mmartinezvaras/credit-scoring"
 st.set_page_config(page_title="Scoring de crédito explicable", page_icon="💳", layout="centered")
 
 
-# ---------- Modo claro y oscuro: sigue el tema de Streamlit (que por defecto sigue al sistema) ----------
+# ---------- Modo claro y oscuro: los colores siguen al tema activo de Streamlit ----------
 CLARO = """--ink:#000000; --ink-2:#555555; --silver:#86868B; --paper:#F5F5F7; --sheet:#FFFFFF; --accent:#000000;
   --rule:rgba(134,134,139,.35); --ring:rgba(0,0,0,.08); --on-strong:#FFFFFF;
   --lift:0 1px 2px rgba(0,0,0,.04), 0 4px 16px -6px rgba(0,0,0,.10);
@@ -42,9 +43,9 @@ html, body, [class*="st-"], .stMarkdown, button, input, textarea {
 [data-testid="stIconMaterial"], [data-testid="stExpanderIcon"], .material-symbols-rounded {
   font-family: "Material Symbols Rounded" !important;
 }
-footer, [data-testid="stAppDeployButton"], [data-testid="stDecoration"] { display: none !important; }
-[data-testid="stHeader"] { background: transparent; }
-[data-testid="stMainBlockContainer"], .block-container { padding-top: 3rem; padding-bottom: 4rem; max-width: 760px; }
+#MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
+[data-testid="stHeader"] { display: none !important; }
+[data-testid="stMainBlockContainer"], .block-container { padding-top: 1.5rem; padding-bottom: 4rem; max-width: 760px; }
 
 /* Cabecera */
 .eyebrow { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; }
@@ -236,6 +237,28 @@ def describir(col, f):
         return "Edad", f"{int(v)} años"
     return col, ""
 
+
+# ---------- Botón Claro / Oscuro ----------
+# Streamlit guarda el tema elegido en el navegador (localStorage). El botón cambia ese valor y recarga la página,
+# así cambian también la tabla y los demás controles de Streamlit, no solo nuestros colores.
+actual = "Oscuro" if tema == "dark" else "Claro"
+_, col_tema = st.columns([5, 2])
+elegido = col_tema.segmented_control(
+    "Tema", ["Claro", "Oscuro"], default=actual, key="tema", label_visibility="collapsed",
+    format_func=lambda t: (":material/light_mode: " if t == "Claro" else ":material/dark_mode: ") + t,
+)
+if elegido and elegido != actual:
+    nombre_tema = "Dark" if elegido == "Oscuro" else "Light"
+    components.html(
+        f"""<script>
+        const ls = window.parent.localStorage;
+        const claves = Object.keys(ls).filter(k => k.startsWith("stActiveTheme-"));
+        if (!claves.length) claves.push("stActiveTheme-/-v2");
+        claves.forEach(k => ls.setItem(k, JSON.stringify("{nombre_tema}")));
+        window.parent.location.reload();
+        </script>""",
+        height=0,
+    )
 
 # ---------- 3. Cabecera para quien llega por primera vez ----------
 st.markdown(

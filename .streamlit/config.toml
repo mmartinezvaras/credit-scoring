@@ -1,14 +1,11 @@
-# Dos temas: la app sigue el modo claro u oscuro del sistema
-# (y se puede cambiar en el menú ⋮ → Settings).
+# Dos temas: el botón Claro / Oscuro de la app elige entre ellos.
 [theme.light]
-base = "light"
 primaryColor = "#000000"
 backgroundColor = "#F5F5F7"
 secondaryBackgroundColor = "#FFFFFF"
 textColor = "#000000"
 
 [theme.dark]
-base = "dark"
 primaryColor = "#FFFFFF"
 backgroundColor = "#000000"
 secondaryBackgroundColor = "#141414"
