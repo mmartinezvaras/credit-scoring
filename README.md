@@ -4,7 +4,9 @@ Modelo de **probabilidad de impago (PD)** para clientes de tarjeta de crédito, 
 
 Incluye una **app en Streamlit** (`app/app.py`): cambias los datos de un cliente y ves su probabilidad de impago, su tramo de riesgo, la decisión y los motivos.
 
-![App de scoring: cliente en apuros con PD del 63,8 %, tramo E y sus motivos](docs/app.jpg)
+![Portada de la app: qué hace el modelo y cómo usarlo](docs/app_inicio.jpg)
+
+![Resultado para un cliente en apuros: probabilidad de impago del 63,8 %, tramo E, decisión Revisar y sus motivos](docs/app.jpg)
 
 ## Los datos
 
