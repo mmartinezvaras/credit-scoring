@@ -5,3 +5,7 @@ primaryColor = "#000000"
 backgroundColor = "#F5F5F7"
 secondaryBackgroundColor = "#FFFFFF"
 textColor = "#000000"
+
+[client]
+# Las páginas se enlazan desde la propia app (st.page_link), no desde el menú lateral automático.
+showSidebarNavigation = false
