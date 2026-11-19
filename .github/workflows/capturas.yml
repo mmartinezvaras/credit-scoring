@@ -1,0 +1,45 @@
+name: capturas
+
+# Arranca la app de verdad y guarda capturas de las dos páginas en modo claro y oscuro
+# (rama «capturas»), para ver cada cambio sin abrir la web.
+on:
+  push:
+    paths:
+      - "app/**"
+      - ".streamlit/**"
+      - ".github/scripts/capturas.py"
+      - ".github/workflows/capturas.yml"
+  workflow_dispatch:
+
+jobs:
+  capturas:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar
+        run: |
+          pip install --quiet -r app/requirements.txt playwright
+          python -m playwright install --with-deps chromium > /dev/null
+      - name: Abrir la app y hacer capturas
+        run: |
+          nohup python -m streamlit run app/app.py --server.headless true --server.port 8501 \
+            --browser.gatherUsageStats false > streamlit.log 2>&1 &
+          if ! python .github/scripts/capturas.py; then cat streamlit.log; exit 1; fi
+      - name: Publicar las capturas en la rama «capturas»
+        run: |
+          mkdir -p /tmp/capturas && cp *.png /tmp/capturas/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan capturas
+          git rm -rq --cached .
+          cp /tmp/capturas/*.png .
+          git add *.png
+          git commit -qm "Capturas de ${GITHUB_SHA::7}"
+          git push -f origin HEAD:capturas
